@@ -1,4 +1,12 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+// Local: http://localhost:3001/api  |  Vercel: /api (proxied by app/api/[...path]/route.ts)
+function resolveApiUrl(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (fromEnv) return fromEnv;
+  if (typeof window !== 'undefined') return '/api';
+  return 'http://localhost:3001/api';
+}
+
+const API_URL = resolveApiUrl();
 
 export type AuthUser = {
   id: string;
@@ -25,16 +33,25 @@ export async function api<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const token = getToken();
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new Error(
+      `Cannot reach API at ${API_URL}. For local dev: run Docker + backend on port 3001. For Vercel: set BACKEND_URL to your hosted API.`,
+    );
+  }
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
+    const err = await res.json().catch(() => ({
+      message: res.status === 404 ? 'API route not found' : res.statusText,
+    }));
     const msg = err.message;
     throw new Error(
       Array.isArray(msg) ? msg.join(', ') : (msg ?? `Request failed (${res.status})`),

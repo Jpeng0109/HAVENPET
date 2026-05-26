@@ -1,0 +1,24 @@
+# Deploy backend API on Render: https://render.com
+# After deploy, set Vercel env BACKEND_URL to your Render service URL (no trailing slash).
+
+services:
+  - type: web
+    name: havenpet-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npx prisma db seed && npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://frontend-alpha-gilt-93.vercel.app,http://localhost:3000
+      - key: API_PREFIX
+        value: api
