@@ -1,47 +1,56 @@
 # HAVENPET Deployment
 
-## Why login shows "Failed to fetch"
+## Fix: "API is not connected"
 
-The **Vercel site is frontend-only**. Login calls the NestJS API. If the API is not deployed and `BACKEND_URL` is missing, requests fail.
+Vercel only hosts the **frontend**. Login needs the **NestJS API** on Render (or similar) plus `BACKEND_URL` on Vercel.
 
-| Environment | What you need |
-|-------------|----------------|
-| **Local** | `docker compose up -d`, backend on `:3001`, `frontend/.env.local` with `NEXT_PUBLIC_API_URL=http://localhost:3001/api` |
-| **Vercel** | Backend on Render/Railway + Vercel env vars below |
+---
 
-## GitHub
+## Step 1 — Deploy API on Render (about 10 minutes)
 
-- Repository: https://github.com/Jpeng0109/HAVENPET
+1. Open **[Render Blueprint](https://dashboard.render.com/select-repo?type=blueprint)** and sign in with GitHub.
+2. Select repo **`Jpeng0109/HAVENPET`**.
+3. Render reads root `render.yaml` and creates:
+   - PostgreSQL database `havenpet-db`
+   - Web service `havenpet-api`
+4. Click **Apply** and wait until the web service status is **Live** (first deploy can take 5–10 min on free tier).
+5. Copy the service URL, e.g. `https://havenpet-api-xxxx.onrender.com` (no trailing slash).
+6. Verify in browser: `https://YOUR-URL.onrender.com/api/health` → should return JSON like `{"status":"ok"}`.
 
-## Vercel (Frontend)
+> Free Render services sleep after inactivity; the first request after sleep may take ~30s.
 
-- **Production URL:** https://frontend-alpha-gilt-93.vercel.app
-- **Project:** `frontend` (team: joshua's projects)
-- **Git:** Connected to `Jpeng0109/HAVENPET` — auto-deploy on push to `main`
+---
 
-### Required environment variables
+## Step 2 — Connect Vercel to the API
 
-Set in Vercel → Project → Settings → Environment Variables → **Production**:
+### Option A — Script (Windows)
 
-| Variable | Example | Notes |
-|----------|---------|--------|
-| `NEXT_PUBLIC_API_URL` | `/api` | Browser calls same-origin `/api/*` |
-| `BACKEND_URL` | `https://havenpet-api.onrender.com` | **No** trailing slash; NestJS service URL |
+```powershell
+cd C:\Users\工作站1\Desktop\coding\HAVENPET
+.\scripts\set-vercel-backend.ps1 -BackendUrl "https://havenpet-api-xxxx.onrender.com"
+```
 
-After changing env vars, **redeploy** the frontend (Deployments → Redeploy).
+### Option B — Vercel Dashboard
 
-The Next.js route `app/api/[...path]/route.ts` proxies `/api/*` to `BACKEND_URL/api/*` at runtime.
+1. [Vercel → frontend project → Settings → Environment Variables](https://vercel.com)
+2. Add **Production** variables:
 
-## Render (Backend API)
+| Name | Value |
+|------|--------|
+| `NEXT_PUBLIC_API_URL` | `/api` |
+| `BACKEND_URL` | `https://havenpet-api-xxxx.onrender.com` |
 
-1. Push this repo to GitHub.
-2. In [Render](https://render.com) → **New** → **Blueprint** → connect `Jpeng0109/HAVENPET` (uses root `render.yaml`).
-3. Create a **PostgreSQL** database on Render; copy **Internal Database URL** into the web service env as `DATABASE_URL`.
-4. Wait for deploy; open `https://<your-service>.onrender.com/api/health`.
-5. Set Vercel `BACKEND_URL` to `https://<your-service>.onrender.com` (no `/api` suffix).
-6. Redeploy Vercel frontend.
+3. **Deployments → Redeploy** latest production build.
 
-`render.yaml` runs migrations and `prisma db seed` (creates `admin@havenpet.com` / `Admin123!`).
+---
+
+## Step 3 — Test login
+
+- URL: https://frontend-alpha-gilt-93.vercel.app/login  
+- **HQ Admin:** `admin@havenpet.com` / `Admin123!`  
+- Seed runs automatically on Render deploy (`prisma db seed`).
+
+---
 
 ## Local development
 
@@ -50,9 +59,18 @@ docker compose up -d
 cd backend
 npm run start:dev
 cd ../frontend
-# frontend/.env.local:
-# NEXT_PUBLIC_API_URL=http://localhost:3001/api
+# .env.local: NEXT_PUBLIC_API_URL=http://localhost:3001/api
 npm run dev
 ```
 
-Open http://localhost:3000/login — credentials: `admin@havenpet.com` / `Admin123!`
+Open http://localhost:3000/login
+
+---
+
+## Links
+
+| Service | URL |
+|---------|-----|
+| GitHub | https://github.com/Jpeng0109/HAVENPET |
+| Vercel (frontend) | https://frontend-alpha-gilt-93.vercel.app |
+| Render dashboard | https://dashboard.render.com |

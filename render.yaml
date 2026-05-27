@@ -1,5 +1,11 @@
-# Deploy backend API on Render: https://render.com
-# After deploy, set Vercel env BACKEND_URL to your Render service URL (no trailing slash).
+# One-click deploy: https://dashboard.render.com/select-repo?type=blueprint
+# After deploy, set Vercel BACKEND_URL to your service URL (see scripts/set-vercel-backend.ps1).
+
+databases:
+  - name: havenpet-db
+    plan: free
+    databaseName: havenpet
+    user: havenpet
 
 services:
   - type: web
@@ -7,13 +13,16 @@ services:
     runtime: node
     rootDir: backend
     plan: free
+    healthCheckPath: /api/health
     buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npx prisma migrate deploy && npx prisma db seed && npm run start:prod
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: havenpet-db
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
@@ -22,3 +31,5 @@ services:
         value: https://frontend-alpha-gilt-93.vercel.app,http://localhost:3000
       - key: API_PREFIX
         value: api
+      - key: EXCHANGE_RATE_API_URL
+        value: https://api.exchangerate-api.com/v4/latest/USD

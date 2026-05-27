@@ -9,8 +9,22 @@ async function bootstrap() {
   const prefix = process.env.API_PREFIX ?? 'api';
   app.setGlobalPrefix(prefix);
 
+  const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      const allowed =
+        corsOrigins.includes(origin) ||
+        /^https:\/\/[\w-]+([\w-]*)\.vercel\.app$/.test(origin);
+      callback(null, allowed);
+    },
     credentials: true,
   });
 
