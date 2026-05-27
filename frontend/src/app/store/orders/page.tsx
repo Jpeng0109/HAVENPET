@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/i18n/context';
 import { Order, ordersApi } from '@/lib/api';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -14,6 +15,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function StoreOrdersPage() {
+  const { t, tStatus } = useI18n();
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
@@ -22,9 +24,9 @@ export default function StoreOrdersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Order History</h1>
+      <h1 className="text-2xl font-bold">{t('store.orders.title')}</h1>
       <div className="mt-6 space-y-3">
-        {orders.length === 0 && <p className="text-slate-500">No orders yet.</p>}
+        {orders.length === 0 && <p className="text-slate-500">{t('store.orders.noOrders')}</p>}
         {orders.map((o) => (
           <div key={o.id} className="rounded-xl border bg-white p-4">
             <div className="flex items-center justify-between">
@@ -39,11 +41,11 @@ export default function StoreOrdersPage() {
                   STATUS_COLORS[o.status] ?? 'bg-slate-100'
                 }`}
               >
-                {o.status.replace(/_/g, ' ')}
+                {tStatus(o.status)}
               </span>
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              {o.items.length} item(s)
+              {t('common.items', { count: o.items.length })}
             </p>
             <div className="mt-3 flex gap-4">
               {o.status === 'pending_payment' && (
@@ -51,7 +53,7 @@ export default function StoreOrdersPage() {
                   href={`/store/checkout/${o.id}`}
                   className="text-sm font-medium text-brand-600 hover:underline"
                 >
-                  Complete payment →
+                  {t('store.orders.completePayment')}
                 </Link>
               )}
               {o.status !== 'draft' && o.status !== 'pending_payment' && o.status !== 'cancelled' && (
@@ -59,7 +61,7 @@ export default function StoreOrdersPage() {
                   href={`/store/orders/${o.id}`}
                   className="text-sm font-medium text-brand-600 hover:underline"
                 >
-                  Track shipment →
+                  {t('store.orders.trackShipment')}
                 </Link>
               )}
             </div>

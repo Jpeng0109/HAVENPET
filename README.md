@@ -20,6 +20,14 @@ HAVENPET/
 └── README.md
 ```
 
+## Languages
+
+The web app supports **English**, **Filipino**, and **Chinese (简体中文)**.
+
+- Use the **Language** dropdown on the login page or in the HQ / Store sidebar.
+- Your choice is saved in the browser (`havenpet_locale`).
+- Message files: `frontend/src/i18n/messages/{en,fil,zh}.ts`
+
 ## Roles
 
 - **HQ Admin** — Global inventory, store CRUD, order fulfillment, analytics

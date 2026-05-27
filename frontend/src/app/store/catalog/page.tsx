@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/i18n/context';
 import { CatalogProduct, catalogApi } from '@/lib/api';
 import { addToCart } from '@/lib/cart';
 
 export default function StoreCatalogPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [added, setAdded] = useState<string | null>(null);
 
@@ -14,23 +16,22 @@ export default function StoreCatalogPage() {
     catalogApi.list().then(setProducts);
   }, []);
 
-  function handleAdd(
-    product: CatalogProduct,
-    sku: CatalogProduct['skus'][0],
-    qty: number,
-  ) {
+  function handleAdd(product: CatalogProduct, sku: CatalogProduct['skus'][0], qty: number) {
     if (sku.hqAvailable < 1) return;
-    addToCart({
-      skuId: sku.id,
-      skuVariantCode: sku.skuVariantCode,
-      productName: product.name,
-      flavour: sku.flavour,
-      weightLabel: sku.weightLabel,
-      priceUsd: sku.priceUsd,
-      priceLocal: sku.priceLocal,
-      currency: sku.currency,
-      hqAvailable: sku.hqAvailable,
-    }, qty);
+    addToCart(
+      {
+        skuId: sku.id,
+        skuVariantCode: sku.skuVariantCode,
+        productName: product.name,
+        flavour: sku.flavour,
+        weightLabel: sku.weightLabel,
+        priceUsd: sku.priceUsd,
+        priceLocal: sku.priceLocal,
+        currency: sku.currency,
+        hqAvailable: sku.hqAvailable,
+      },
+      qty,
+    );
     setAdded(sku.id);
     setTimeout(() => setAdded(null), 1500);
   }
@@ -39,14 +40,14 @@ export default function StoreCatalogPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">B2B Product Catalog</h1>
-          <p className="text-slate-500">Prices shown in your local currency (live FX conversion)</p>
+          <h1 className="text-2xl font-bold">{t('store.catalog.title')}</h1>
+          <p className="text-slate-500">{t('store.catalog.subtitle')}</p>
         </div>
         <button
           onClick={() => router.push('/store/cart')}
           className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white"
         >
-          View Cart →
+          {t('store.catalog.viewCart')}
         </button>
       </div>
 
@@ -54,7 +55,9 @@ export default function StoreCatalogPage() {
         {products.map((p) => (
           <div key={p.id} className="rounded-xl border border-slate-200 bg-white p-5">
             <h3 className="font-semibold">{p.name}</h3>
-            <p className="text-xs text-slate-500">{p.skuCode} · {p.category}</p>
+            <p className="text-xs text-slate-500">
+              {p.skuCode} · {p.category}
+            </p>
             <div className="mt-4 space-y-2">
               {p.skus.map((s) => (
                 <div
@@ -69,10 +72,12 @@ export default function StoreCatalogPage() {
                     <p className="mt-1 text-sm font-semibold text-brand-700">
                       {s.priceLocal.toFixed(2)} {s.currency}
                       <span className="ml-2 font-normal text-slate-400">
-                        (${s.priceUsd.toFixed(2)} USD)
+                        {t('common.usdParen', { amount: s.priceUsd.toFixed(2) })}
                       </span>
                     </p>
-                    <p className="text-xs text-slate-500">HQ available: {s.hqAvailable}</p>
+                    <p className="text-xs text-slate-500">
+                      {t('store.catalog.hqAvailable', { qty: s.hqAvailable })}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -80,14 +85,14 @@ export default function StoreCatalogPage() {
                       onClick={() => handleAdd(p, s, 1)}
                       className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
                     >
-                      {added === s.id ? 'Added ✓' : '+ Cart'}
+                      {added === s.id ? t('store.catalog.added') : t('store.catalog.addCart')}
                     </button>
                     {s.hqAvailable >= 10 && (
                       <button
                         onClick={() => handleAdd(p, s, 10)}
                         className="rounded-lg border px-3 py-1.5 text-xs"
                       >
-                        +10
+                        {t('common.addTen')}
                       </button>
                     )}
                   </div>

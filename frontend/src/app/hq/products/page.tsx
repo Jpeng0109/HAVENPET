@@ -1,9 +1,11 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import { useI18n } from '@/i18n/context';
 import { Product, productsApi } from '@/lib/api';
 
 export default function HqProductsPage() {
+  const { t } = useI18n();
   const [products, setProducts] = useState<Product[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [skuProductId, setSkuProductId] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export default function HqProductsPage() {
       setShowForm(false);
       load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed');
+      setError(err instanceof Error ? err.message : t('common.failed'));
     }
   }
 
@@ -52,35 +54,43 @@ export default function HqProductsPage() {
       setSkuProductId(null);
       load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed');
+      setError(err instanceof Error ? err.message : t('common.failed'));
     }
   }
+
+  const productFields = [
+    ['skuCode', t('hq.products.productCode')],
+    ['name', t('common.name')],
+    ['category', t('common.category')],
+    ['basePriceUsd', t('hq.products.basePriceUsd')],
+  ] as const;
+
+  const skuFields = [
+    ['skuVariantCode', t('hq.products.skuCode')],
+    ['flavour', t('hq.products.flavour')],
+    ['weightLabel', t('hq.products.weight')],
+    ['priceUsd', t('hq.products.priceUsd')],
+    ['initialHqStock', t('hq.products.initialHqStock')],
+  ] as const;
 
   return (
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Product Catalog</h1>
-          <p className="text-slate-500">Manage products and SKU variants</p>
+          <h1 className="text-2xl font-bold">{t('hq.products.title')}</h1>
+          <p className="text-slate-500">{t('hq.products.subtitle')}</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white"
         >
-          {showForm ? 'Cancel' : '+ Add Product'}
+          {showForm ? t('common.cancel') : t('hq.products.addProduct')}
         </button>
       </div>
 
       {showForm && (
         <form onSubmit={createProduct} className="mt-6 grid gap-3 rounded-xl border bg-white p-6 sm:grid-cols-2">
-          {(
-            [
-              ['skuCode', 'Product Code'],
-              ['name', 'Name'],
-              ['category', 'Category'],
-              ['basePriceUsd', 'Base Price USD'],
-            ] as const
-          ).map(([key, label]) => (
+          {productFields.map(([key, label]) => (
             <div key={key}>
               <label className="text-xs text-slate-600">{label}</label>
               <input
@@ -98,23 +108,17 @@ export default function HqProductsPage() {
             </div>
           ))}
           <button type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white sm:col-span-2">
-            Create Product
+            {t('hq.products.createProduct')}
           </button>
         </form>
       )}
 
       {skuProductId && (
         <form onSubmit={createSku} className="mt-4 grid gap-3 rounded-xl border border-brand-200 bg-brand-50 p-6 sm:grid-cols-2">
-          <p className="text-sm font-medium text-brand-700 sm:col-span-2">Add SKU variant</p>
-          {(
-            [
-              ['skuVariantCode', 'SKU Code'],
-              ['flavour', 'Flavour'],
-              ['weightLabel', 'Weight'],
-              ['priceUsd', 'Price USD'],
-              ['initialHqStock', 'Initial HQ Stock'],
-            ] as const
-          ).map(([key, label]) => (
+          <p className="text-sm font-medium text-brand-700 sm:col-span-2">
+            {t('hq.products.addSkuVariant')}
+          </p>
+          {skuFields.map(([key, label]) => (
             <div key={key}>
               <label className="text-xs text-slate-600">{label}</label>
               <input
@@ -136,10 +140,10 @@ export default function HqProductsPage() {
           ))}
           <div className="flex gap-2 sm:col-span-2">
             <button type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white">
-              Add SKU
+              {t('hq.products.addSku')}
             </button>
             <button type="button" onClick={() => setSkuProductId(null)} className="rounded-lg border px-4 py-2 text-sm">
-              Cancel
+              {t('common.cancel')}
             </button>
           </div>
         </form>
@@ -161,16 +165,13 @@ export default function HqProductsPage() {
                 onClick={() => setSkuProductId(p.id)}
                 className="text-xs font-medium text-brand-600 hover:underline"
               >
-                + Add SKU
+                {t('hq.products.addSku')}
               </button>
             </div>
             {p.skus.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {p.skus.map((s) => (
-                  <span
-                    key={s.id}
-                    className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700"
-                  >
+                  <span key={s.id} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
                     {s.skuVariantCode}
                     {s.flavour && ` · ${s.flavour}`}
                     {s.weightLabel && ` · ${s.weightLabel}`}

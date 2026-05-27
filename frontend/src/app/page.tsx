@@ -2,9 +2,11 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/i18n/context';
 
 export default function Home() {
   const router = useRouter();
+  const { t } = useI18n();
 
   useEffect(() => {
     const token = localStorage.getItem('havenpet_token');
@@ -20,7 +22,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <p className="text-slate-500">Loading...</p>
+      <p className="text-slate-500">{t('common.loading')}</p>
     </div>
   );
 }

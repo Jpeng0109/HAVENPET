@@ -1,16 +1,11 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import { useI18n } from '@/i18n/context';
 import { FulfillmentOrder, shipmentsApi } from '@/lib/api';
 
-const NEXT_ACTION: Record<string, { label: string; hint: string }> = {
-  paid_awaiting_shipment: { label: 'Ship Order', hint: 'Create shipment with tracking info' },
-  shipped_in_transit: { label: 'Mark Customs Clearance', hint: 'Cargo entered customs' },
-  customs_clearance: { label: 'Mark Arrived at Store', hint: 'Delivered to destination port / store' },
-  arrived_at_store: { label: 'Complete Order', hint: 'Stock transferred to store inventory' },
-};
-
 export default function HqFulfillmentPage() {
+  const { t, tStatus } = useI18n();
   const [orders, setOrders] = useState<FulfillmentOrder[]>([]);
   const [shipOrderId, setShipOrderId] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -25,6 +20,25 @@ export default function HqFulfillmentPage() {
   });
   const [advanceNotes, setAdvanceNotes] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const NEXT_ACTION: Record<string, { label: string; hint: string }> = {
+    paid_awaiting_shipment: {
+      label: t('hq.fulfillment.shipOrder'),
+      hint: t('hq.fulfillment.shipHint'),
+    },
+    shipped_in_transit: {
+      label: t('hq.fulfillment.markCustoms'),
+      hint: t('hq.fulfillment.customsHint'),
+    },
+    customs_clearance: {
+      label: t('hq.fulfillment.markArrived'),
+      hint: t('hq.fulfillment.arrivedHint'),
+    },
+    arrived_at_store: {
+      label: t('hq.fulfillment.completeOrder'),
+      hint: t('hq.fulfillment.completeHint'),
+    },
+  };
 
   function load() {
     shipmentsApi.fulfillment().then(setOrders);
@@ -43,7 +57,7 @@ export default function HqFulfillmentPage() {
       setShipOrderId(null);
       load();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Ship failed');
+      alert(err instanceof Error ? err.message : t('hq.fulfillment.shipFailed'));
     } finally {
       setLoading(false);
     }
@@ -56,31 +70,31 @@ export default function HqFulfillmentPage() {
       setAdvanceNotes('');
       load();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Advance failed');
+      alert(err instanceof Error ? err.message : t('hq.fulfillment.advanceFailed'));
     } finally {
       setLoading(false);
     }
   }
 
+  const formFields = [
+    ['carrier', t('hq.fulfillment.carrier')],
+    ['trackingNumber', t('hq.fulfillment.trackingNumber')],
+    ['containerId', t('hq.fulfillment.containerId')],
+    ['vesselFlight', t('hq.fulfillment.vesselFlight')],
+    ['originPort', t('hq.fulfillment.originPort')],
+    ['destinationPort', t('hq.fulfillment.destinationPort')],
+    ['estimatedArrival', t('hq.fulfillment.estArrival')],
+  ] as const;
+
   return (
     <div>
-      <h1 className="text-2xl font-bold">Order Fulfillment</h1>
-      <p className="text-slate-500">Pack, ship, and track international B2B orders</p>
+      <h1 className="text-2xl font-bold">{t('hq.fulfillment.title')}</h1>
+      <p className="text-slate-500">{t('hq.fulfillment.subtitle')}</p>
 
       {shipOrderId && (
         <form onSubmit={handleShip} className="mt-6 grid gap-3 rounded-xl border bg-white p-6 sm:grid-cols-2">
-          <p className="font-semibold text-brand-700 sm:col-span-2">Create Shipment</p>
-          {(
-            [
-              ['carrier', 'Carrier'],
-              ['trackingNumber', 'Tracking Number'],
-              ['containerId', 'Container ID'],
-              ['vesselFlight', 'Vessel / Flight'],
-              ['originPort', 'Origin Port'],
-              ['destinationPort', 'Destination Port'],
-              ['estimatedArrival', 'Est. Arrival (ISO date)'],
-            ] as const
-          ).map(([key, label]) => (
+          <p className="font-semibold text-brand-700 sm:col-span-2">{t('hq.fulfillment.createShipment')}</p>
+          {formFields.map(([key, label]) => (
             <div key={key}>
               <label className="text-xs text-slate-600">{label}</label>
               <input
@@ -93,17 +107,17 @@ export default function HqFulfillmentPage() {
           ))}
           <div className="flex gap-2 sm:col-span-2">
             <button type="submit" disabled={loading} className="rounded-lg bg-brand-600 px-4 py-2 text-sm text-white">
-              Confirm Shipment
+              {t('hq.fulfillment.confirmShipment')}
             </button>
             <button type="button" onClick={() => setShipOrderId(null)} className="rounded-lg border px-4 py-2 text-sm">
-              Cancel
+              {t('common.cancel')}
             </button>
           </div>
         </form>
       )}
 
       <div className="mt-6 space-y-4">
-        {orders.length === 0 && <p className="text-slate-500">No orders awaiting fulfillment.</p>}
+        {orders.length === 0 && <p className="text-slate-500">{t('hq.fulfillment.noOrders')}</p>}
         {orders.map((o) => {
           const action = NEXT_ACTION[o.status];
           return (
@@ -118,7 +132,7 @@ export default function HqFulfillmentPage() {
                     {Number(o.totalAmount).toFixed(2)} {o.currency}
                   </p>
                   <span className="mt-2 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium">
-                    {o.status.replace(/_/g, ' ')}
+                    {tStatus(o.status)}
                   </span>
                 </div>
                 <div className="text-right text-sm">
@@ -134,13 +148,13 @@ export default function HqFulfillmentPage() {
                     onClick={() => setShipOrderId(o.id)}
                     className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white"
                   >
-                    {action?.label ?? 'Ship'}
+                    {action?.label ?? t('hq.fulfillment.ship')}
                   </button>
                 )}
                 {o.status !== 'paid_awaiting_shipment' && action && (
                   <>
                     <input
-                      placeholder="Notes (optional, e.g. customs info)"
+                      placeholder={t('common.notesOptional')}
                       value={advanceNotes}
                       onChange={(e) => setAdvanceNotes(e.target.value)}
                       className="rounded-lg border px-3 py-2 text-sm"

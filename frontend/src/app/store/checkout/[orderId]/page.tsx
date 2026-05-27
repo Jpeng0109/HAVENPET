@@ -2,24 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useI18n } from '@/i18n/context';
 import { Order, ordersApi, paymentsApi } from '@/lib/api';
-
-const METHODS = [
-  { id: 'credit_card', label: 'Credit Card', instant: true },
-  { id: 'stripe', label: 'Stripe', instant: true },
-  { id: 'paypal', label: 'PayPal', instant: true },
-  { id: 'bank_wire', label: 'Bank Wire Transfer', instant: false },
-];
 
 export default function CheckoutPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
+  const { t } = useI18n();
   const [order, setOrder] = useState<Order | null>(null);
   const [method, setMethod] = useState('credit_card');
   const [receiptUrl, setReceiptUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
+
+  const METHODS = [
+    { id: 'credit_card', label: t('store.checkout.creditCard'), instant: true },
+    { id: 'stripe', label: t('store.checkout.stripe'), instant: true },
+    { id: 'paypal', label: t('store.checkout.paypal'), instant: true },
+    { id: 'bank_wire', label: t('store.checkout.bankWire'), instant: false },
+  ];
 
   useEffect(() => {
     ordersApi.get(orderId).then(setOrder);
@@ -29,27 +31,23 @@ export default function CheckoutPage() {
     setLoading(true);
     setError('');
     try {
-      await paymentsApi.create(
-        orderId,
-        method,
-        method === 'bank_wire' ? receiptUrl : undefined,
-      );
+      await paymentsApi.create(orderId, method, method === 'bank_wire' ? receiptUrl : undefined);
       setDone(true);
       setTimeout(() => router.push('/store/orders'), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Payment failed');
+      setError(err instanceof Error ? err.message : t('store.checkout.paymentFailed'));
     } finally {
       setLoading(false);
     }
   }
 
-  if (!order) return <p className="text-slate-500">Loading order...</p>;
+  if (!order) return <p className="text-slate-500">{t('store.checkout.loadingOrder')}</p>;
 
   const selected = METHODS.find((m) => m.id === method);
 
   return (
     <div className="max-w-lg">
-      <h1 className="text-2xl font-bold">Checkout</h1>
+      <h1 className="text-2xl font-bold">{t('store.checkout.title')}</h1>
       <p className="text-slate-500">{order.orderNumber}</p>
 
       <div className="mt-6 rounded-xl border bg-white p-5">
@@ -57,21 +55,21 @@ export default function CheckoutPage() {
           {Number(order.totalAmount).toFixed(2)} {order.currency}
         </p>
         <p className="text-xs text-slate-500 mt-1">
-          incl. VAT {Number(order.taxAmount).toFixed(2)} · Duty{' '}
-          {Number(order.dutyAmount).toFixed(2)} · Shipping{' '}
-          {Number(order.shippingAmount).toFixed(2)}
+          {t('store.checkout.inclBreakdown', {
+            tax: Number(order.taxAmount).toFixed(2),
+            duty: Number(order.dutyAmount).toFixed(2),
+            shipping: Number(order.shippingAmount).toFixed(2),
+          })}
         </p>
       </div>
 
       {done ? (
         <div className="mt-6 rounded-xl bg-green-50 p-4 text-green-800">
-          {method === 'bank_wire'
-            ? 'Wire transfer submitted. Awaiting HQ approval.'
-            : 'Payment successful! Redirecting to orders...'}
+          {method === 'bank_wire' ? t('store.checkout.wireSubmitted') : t('store.checkout.paymentSuccess')}
         </div>
       ) : (
         <>
-          <h2 className="mt-6 font-semibold">Payment Method</h2>
+          <h2 className="mt-6 font-semibold">{t('store.checkout.paymentMethod')}</h2>
           <div className="mt-3 space-y-2">
             {METHODS.map((m) => (
               <label
@@ -89,7 +87,7 @@ export default function CheckoutPage() {
                 />
                 <span className="text-sm font-medium">{m.label}</span>
                 {m.instant && (
-                  <span className="ml-auto text-xs text-green-600">Instant</span>
+                  <span className="ml-auto text-xs text-green-600">{t('common.instant')}</span>
                 )}
               </label>
             ))}
@@ -97,11 +95,11 @@ export default function CheckoutPage() {
 
           {method === 'bank_wire' && (
             <div className="mt-4">
-              <label className="text-sm text-slate-600">Receipt URL (upload elsewhere, paste link)</label>
+              <label className="text-sm text-slate-600">{t('store.checkout.receiptUrl')}</label>
               <input
                 value={receiptUrl}
                 onChange={(e) => setReceiptUrl(e.target.value)}
-                placeholder="https://..."
+                placeholder={t('store.checkout.receiptPlaceholder')}
                 className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
               />
             </div>
@@ -115,10 +113,13 @@ export default function CheckoutPage() {
             className="mt-6 w-full rounded-lg bg-brand-600 py-3 font-semibold text-white disabled:opacity-60"
           >
             {loading
-              ? 'Processing...'
+              ? t('store.cart.processing')
               : selected?.instant
-                ? `Pay ${Number(order.totalAmount).toFixed(2)} ${order.currency}`
-                : 'Submit Wire Transfer'}
+                ? t('store.checkout.payAmount', {
+                    amount: Number(order.totalAmount).toFixed(2),
+                    currency: order.currency,
+                  })
+                : t('store.checkout.submitWire')}
           </button>
         </>
       )}

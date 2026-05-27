@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import { useI18n } from '@/i18n/context';
 import { Store, storesApi } from '@/lib/api';
 
 const emptyForm = {
@@ -17,6 +18,7 @@ const emptyForm = {
 };
 
 export default function HqStoresPage() {
+  const { t } = useI18n();
   const [stores, setStores] = useState<Store[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
@@ -41,30 +43,41 @@ export default function HqStoresPage() {
       setShowForm(false);
       load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create store');
+      setError(err instanceof Error ? err.message : t('hq.stores.createFailed'));
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Deactivate store "${name}"?`)) return;
+    if (!confirm(t('hq.stores.deactivateConfirm', { name }))) return;
     await storesApi.remove(id);
     load();
   }
+
+  const formFields = [
+    ['code', t('hq.stores.storeCode')],
+    ['name', t('common.name')],
+    ['country', t('common.country')],
+    ['city', t('common.city')],
+    ['address', t('common.address')],
+    ['contactName', t('hq.stores.contactName')],
+    ['contactEmail', t('hq.stores.contactEmail')],
+    ['currency', t('common.currency')],
+  ] as const;
 
   return (
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Overseas Stores</h1>
-          <p className="text-slate-500">Register and manage global retail locations</p>
+          <h1 className="text-2xl font-bold">{t('hq.stores.title')}</h1>
+          <p className="text-slate-500">{t('hq.stores.subtitle')}</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
         >
-          {showForm ? 'Cancel' : '+ Add Store'}
+          {showForm ? t('common.cancel') : t('hq.stores.addStore')}
         </button>
       </div>
 
@@ -73,30 +86,21 @@ export default function HqStoresPage() {
           onSubmit={handleSubmit}
           className="mt-6 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 sm:grid-cols-2"
         >
-          {(
-            [
-              ['code', 'Store Code'],
-              ['name', 'Name'],
-              ['country', 'Country'],
-              ['city', 'City'],
-              ['address', 'Address'],
-              ['contactName', 'Contact Name'],
-              ['contactEmail', 'Contact Email'],
-              ['currency', 'Currency'],
-            ] as const
-          ).map(([key, label]) => (
+          {formFields.map(([key, label]) => (
             <div key={key}>
               <label className="mb-1 block text-xs font-medium text-slate-600">{label}</label>
               <input
                 value={form[key]}
                 onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                required={key !== 'currency' || true}
+                required
               />
             </div>
           ))}
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Tax Rate</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              {t('hq.stores.taxRate')}
+            </label>
             <input
               type="number"
               step="0.01"
@@ -106,7 +110,9 @@ export default function HqStoresPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Import Duty Rate</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              {t('hq.stores.importDutyRate')}
+            </label>
             <input
               type="number"
               step="0.01"
@@ -121,7 +127,7 @@ export default function HqStoresPage() {
             disabled={loading}
             className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white sm:col-span-2"
           >
-            {loading ? 'Saving...' : 'Create Store'}
+            {loading ? t('common.saving') : t('hq.stores.createStore')}
           </button>
         </form>
       )}
@@ -130,11 +136,11 @@ export default function HqStoresPage() {
         <table className="w-full text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
-              <th className="px-4 py-3">Code</th>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Location</th>
-              <th className="px-4 py-3">Currency</th>
-              <th className="px-4 py-3">Tax</th>
+              <th className="px-4 py-3">{t('common.code')}</th>
+              <th className="px-4 py-3">{t('common.name')}</th>
+              <th className="px-4 py-3">{t('common.location')}</th>
+              <th className="px-4 py-3">{t('common.currency')}</th>
+              <th className="px-4 py-3">{t('common.tax')}</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -153,7 +159,7 @@ export default function HqStoresPage() {
                     onClick={() => handleDelete(s.id, s.name)}
                     className="text-xs text-red-600 hover:underline"
                   >
-                    Deactivate
+                    {t('hq.stores.deactivate')}
                   </button>
                 </td>
               </tr>

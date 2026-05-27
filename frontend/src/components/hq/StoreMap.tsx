@@ -1,5 +1,7 @@
 'use client';
 
+import { useI18n } from '@/i18n/context';
+
 type StorePin = {
   id: string;
   code: string;
@@ -12,6 +14,7 @@ type StorePin = {
 };
 
 export function StoreMap({ stores }: { stores: StorePin[] }) {
+  const { t, formatNumber } = useI18n();
   const maxRev = Math.max(...stores.map((s) => s.revenueUsd), 1);
 
   function project(lat: number, lng: number) {
@@ -30,7 +33,9 @@ export function StoreMap({ stores }: { stores: StorePin[] }) {
           backgroundSize: '24px 24px',
         }}
       />
-      <p className="absolute left-3 top-3 text-xs font-medium text-slate-500">Global Store Network</p>
+      <p className="absolute left-3 top-3 text-xs font-medium text-slate-500">
+        {t('logistics.globalNetwork')}
+      </p>
       {stores.map((store) => {
         const { x, y } = project(store.latitude, store.longitude);
         const size = 10 + (store.revenueUsd / maxRev) * 18;
@@ -39,7 +44,10 @@ export function StoreMap({ stores }: { stores: StorePin[] }) {
             key={store.id}
             className="group absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${x}%`, top: `${y}%` }}
-            title={`${store.name} — $${store.revenueUsd.toLocaleString()}`}
+            title={t('map.revenueTooltip', {
+              name: store.name,
+              amount: formatNumber(store.revenueUsd),
+            })}
           >
             <span
               className="block rounded-full bg-brand-600 shadow-lg ring-2 ring-white transition group-hover:scale-125"
@@ -48,14 +56,14 @@ export function StoreMap({ stores }: { stores: StorePin[] }) {
             <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white group-hover:block">
               {store.name}
               <br />
-              ${store.revenueUsd.toLocaleString()} USD
+              {t('map.revenuePopup', { amount: formatNumber(store.revenueUsd) })}
             </div>
           </div>
         );
       })}
       {stores.length === 0 && (
         <p className="absolute inset-0 flex items-center justify-center text-sm text-slate-500">
-          No store coordinates configured
+          {t('logistics.noCoordinates')}
         </p>
       )}
     </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { useI18n } from '@/i18n/context';
+
 export type TimelineMilestone = {
   id: string;
   milestone: string;
@@ -24,14 +26,21 @@ type Props = {
 };
 
 export function LogisticsTimeline({ timeline, progress, trackingNumber, carrier }: Props) {
+  const { t, formatDateTime } = useI18n();
+
   return (
     <div className="space-y-6">
       {(trackingNumber || carrier) && (
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
-          {carrier && <p><span className="text-slate-500">Carrier:</span> <strong>{carrier}</strong></p>}
+          {carrier && (
+            <p>
+              <span className="text-slate-500">{t('logistics.carrier')}</span>{' '}
+              <strong>{carrier}</strong>
+            </p>
+          )}
           {trackingNumber && (
             <p className="mt-1 font-mono">
-              <span className="text-slate-500">Tracking:</span> {trackingNumber}
+              <span className="text-slate-500">{t('logistics.tracking')}</span> {trackingNumber}
             </p>
           )}
         </div>
@@ -66,20 +75,16 @@ export function LogisticsTimeline({ timeline, progress, trackingNumber, carrier 
 
       <ol className="relative border-l-2 border-brand-200 pl-6">
         {timeline.length === 0 ? (
-          <li className="text-sm text-slate-500">No tracking events yet.</li>
+          <li className="text-sm text-slate-500">{t('logistics.noEvents')}</li>
         ) : (
-          timeline.map((m, i) => (
-            <li key={m.id} className={`mb-6 ${i === timeline.length - 1 ? '' : ''}`}>
+          timeline.map((m) => (
+            <li key={m.id} className="mb-6">
               <span className="absolute -left-[9px] flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 ring-4 ring-white" />
               <p className="font-semibold text-slate-900">{m.title}</p>
-              {m.location && (
-                <p className="text-sm text-brand-700">{m.location}</p>
-              )}
-              {m.description && (
-                <p className="mt-1 text-sm text-slate-600">{m.description}</p>
-              )}
+              {m.location && <p className="text-sm text-brand-700">{m.location}</p>}
+              {m.description && <p className="mt-1 text-sm text-slate-600">{m.description}</p>}
               <p className="mt-1 text-xs text-slate-400">
-                {new Date(m.occurredAt).toLocaleString()}
+                {formatDateTime(m.occurredAt)}
               </p>
             </li>
           ))

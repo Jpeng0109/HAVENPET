@@ -13,9 +13,11 @@ import {
   YAxis,
 } from 'recharts';
 import { StoreMap } from '@/components/hq/StoreMap';
+import { useI18n } from '@/i18n/context';
 import { AnalyticsOverview, analyticsApi } from '@/lib/api';
 
 export default function HqDashboardPage() {
+  const { t, formatNumber } = useI18n();
   const [data, setData] = useState<AnalyticsOverview | null>(null);
 
   useEffect(() => {
@@ -23,25 +25,23 @@ export default function HqDashboardPage() {
   }, []);
 
   if (!data) {
-    return <p className="text-slate-500">Loading analytics...</p>;
+    return <p className="text-slate-500">{t('hq.dashboard.loadingAnalytics')}</p>;
   }
 
   const { kpis, salesTrend, topSkus, storeRanking, storeMap } = data;
 
   const kpiCards = [
-    { label: 'Total GMV (USD)', value: `$${kpis.totalGmvUsd.toLocaleString()}`, accent: 'text-brand-700 bg-brand-50' },
-    { label: 'B2B Orders', value: kpis.totalOrders, accent: 'text-blue-700 bg-blue-50' },
-    { label: 'Active Stores', value: kpis.activeStores, accent: 'text-slate-700 bg-slate-50' },
-    { label: 'Pending Fulfillment', value: kpis.pendingFulfillment, accent: kpis.pendingFulfillment > 0 ? 'text-amber-700 bg-amber-50' : 'text-slate-700 bg-slate-50' },
+    { label: t('hq.dashboard.totalGmv'), value: `$${kpis.totalGmvUsd.toLocaleString()}`, accent: 'text-brand-700 bg-brand-50' },
+    { label: t('hq.dashboard.b2bOrders'), value: kpis.totalOrders, accent: 'text-blue-700 bg-blue-50' },
+    { label: t('hq.dashboard.activeStores'), value: kpis.activeStores, accent: 'text-slate-700 bg-slate-50' },
+    { label: t('hq.dashboard.pendingFulfillment'), value: kpis.pendingFulfillment, accent: kpis.pendingFulfillment > 0 ? 'text-amber-700 bg-amber-50' : 'text-slate-700 bg-slate-50' },
   ];
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">HQ Global Dashboard</h1>
-        <p className="mt-1 text-slate-500">
-          Revenue, top SKUs, and store performance across the HAVENPET network
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900">{t('hq.dashboard.title')}</h1>
+        <p className="mt-1 text-slate-500">{t('hq.dashboard.subtitle')}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -55,8 +55,8 @@ export default function HqDashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="font-semibold">Sales Trend (GMV USD)</h2>
-          <p className="text-xs text-slate-500">B2B orders + retail sales by month</p>
+          <h2 className="font-semibold">{t('hq.dashboard.salesTrend')}</h2>
+          <p className="text-xs text-slate-500">{t('hq.dashboard.salesTrendHint')}</p>
           <div className="mt-4 h-64">
             {salesTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -64,37 +64,36 @@ export default function HqDashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number) => [`$${v.toLocaleString()}`, 'GMV']} />
+                  <Tooltip formatter={(v: number) => [`$${formatNumber(v)}`, t('hq.dashboard.gmv')]} />
                   <Line type="monotone" dataKey="gmvUsd" stroke="#2d6a4f" strokeWidth={2} dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="flex h-full items-center justify-center text-sm text-slate-400">No sales data yet</p>
+              <p className="flex h-full items-center justify-center text-sm text-slate-400">
+                {t('hq.dashboard.noSalesData')}
+              </p>
             )}
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="font-semibold">Top Selling SKUs</h2>
-          <p className="text-xs text-slate-500">By B2B order revenue (USD)</p>
+          <h2 className="font-semibold">{t('hq.dashboard.topSkus')}</h2>
+          <p className="text-xs text-slate-500">{t('hq.dashboard.topSkusHint')}</p>
           <div className="mt-4 h-64">
             {topSkus.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={topSkus} layout="vertical" margin={{ left: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis
-                    type="category"
-                    dataKey="skuVariantCode"
-                    width={100}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <Tooltip formatter={(v: number) => [`$${v.toLocaleString()}`, 'Revenue']} />
+                  <YAxis type="category" dataKey="skuVariantCode" width={100} tick={{ fontSize: 10 }} />
+                  <Tooltip formatter={(v: number) => [`$${formatNumber(v)}`, t('hq.dashboard.revenue')]} />
                   <Bar dataKey="revenueUsd" fill="#40916c" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="flex h-full items-center justify-center text-sm text-slate-400">No SKU data yet</p>
+              <p className="flex h-full items-center justify-center text-sm text-slate-400">
+                {t('hq.dashboard.noSkuData')}
+              </p>
             )}
           </div>
         </div>
@@ -102,25 +101,22 @@ export default function HqDashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="mb-4 font-semibold">Store Locations</h2>
+          <h2 className="mb-4 font-semibold">{t('hq.dashboard.storeLocations')}</h2>
           <StoreMap stores={storeMap} />
           <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
             {storeMap.map((s) => (
               <span key={s.id}>
-                {s.code}: ${s.revenueUsd.toLocaleString()}
+                {s.code}: ${formatNumber(s.revenueUsd)}
               </span>
             ))}
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="mb-4 font-semibold">Store Leaderboard</h2>
+          <h2 className="mb-4 font-semibold">{t('hq.dashboard.storeLeaderboard')}</h2>
           <div className="space-y-2">
             {storeRanking.map((store, i) => (
-              <div
-                key={store.storeCode}
-                className="flex items-center gap-3 rounded-lg bg-slate-50 px-4 py-3"
-              >
+              <div key={store.storeCode} className="flex items-center gap-3 rounded-lg bg-slate-50 px-4 py-3">
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
                     i === 0
@@ -136,21 +132,26 @@ export default function HqDashboardPage() {
                 </span>
                 <div className="flex-1">
                   <p className="font-medium">{store.storeName}</p>
-                  <p className="text-xs text-slate-500">{store.storeCode} · {store.orderCount} B2B orders</p>
+                  <p className="text-xs text-slate-500">
+                    {store.storeCode} · {t('hq.dashboard.b2bOrdersCount', { count: store.orderCount })}
+                  </p>
                 </div>
-                <p className="font-bold text-brand-700">${store.revenueUsd.toLocaleString()}</p>
+                <p className="font-bold text-brand-700">${formatNumber(store.revenueUsd)}</p>
               </div>
             ))}
             {storeRanking.length === 0 && (
-              <p className="text-sm text-slate-500">No store revenue data yet.</p>
+              <p className="text-sm text-slate-500">{t('hq.dashboard.noStoreRevenue')}</p>
             )}
           </div>
         </div>
       </div>
 
       <p className="text-xs text-slate-400">
-        B2B GMV: ${kpis.b2bGmvUsd.toLocaleString()} · Retail GMV: ${kpis.retailGmvUsd.toLocaleString()} ·{' '}
-        {kpis.completedOrders} completed shipments
+        {t('hq.dashboard.footer', {
+          b2b: formatNumber(kpis.b2bGmvUsd),
+          retail: formatNumber(kpis.retailGmvUsd),
+          completed: kpis.completedOrders,
+        })}
       </p>
     </div>
   );
