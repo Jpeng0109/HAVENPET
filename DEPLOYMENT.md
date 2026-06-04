@@ -17,7 +17,19 @@ Vercel only hosts the **frontend**. Login needs the **NestJS API** on Render (or
 5. Copy the service URL, e.g. `https://havenpet-api-xxxx.onrender.com` (no trailing slash).
 6. Verify in browser: `https://YOUR-URL.onrender.com/api/health` → should return JSON like `{"status":"ok"}`.
 
-> Free Render services sleep after inactivity; the first request after sleep may take ~30s.
+> **Starter plan:** In Render → `havenpet-api` → **Settings → Instance Type** → **Starter** ($7/mo, always on).
+
+### After pushing to GitHub
+
+Render → `havenpet-api` → **Manual Deploy → Deploy latest commit** (commit should include `render.yaml` with `plan: starter` and `--include=dev` build fix).
+
+Optional: create a **Deploy Hook** in Render Settings, then run:
+
+```powershell
+.\scripts\trigger-render-deploy.ps1 -DeployHookUrl "https://api.render.com/deploy/srv-...?key=..."
+```
+
+> Free Render services sleep after inactivity; the first request after sleep may take ~30s. **Starter does not sleep.**
 
 ### Render build failed with exit 127?
 

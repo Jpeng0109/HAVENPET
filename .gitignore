@@ -1,6 +1,6 @@
 node_modules/
-dist/
 .next/
+# Do NOT ignore backend/dist/ — Render omits gitignored paths from deploy after nest build
 .env
 .env.local
 *.log
