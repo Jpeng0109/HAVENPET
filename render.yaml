@@ -1,0 +1,36 @@
+# One-click deploy: https://dashboard.render.com/select-repo?type=blueprint
+# After deploy, set Vercel BACKEND_URL to your service URL (see scripts/set-vercel-backend.ps1).
+
+databases:
+  - name: havenpet-db
+    plan: free
+    databaseName: havenpet
+    user: havenpet
+
+services:
+  - type: web
+    name: havenpet-api
+    runtime: node
+    rootDir: backend
+    plan: starter
+    healthCheckPath: /api/health
+    # NODE_ENV=production skips devDependencies — nest/prisma live in devDeps, so include dev at build.
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npx prisma db seed && npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: havenpet-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://frontend-alpha-gilt-93.vercel.app,http://localhost:3000
+      - key: API_PREFIX
+        value: api
+      - key: EXCHANGE_RATE_API_URL
+        value: https://api.exchangerate-api.com/v4/latest/USD
